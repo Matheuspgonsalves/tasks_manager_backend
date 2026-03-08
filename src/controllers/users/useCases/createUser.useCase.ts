@@ -23,7 +23,7 @@ export const createUserUseCase = async (data: Users) => {
     },
   });
 
-  const { password: _, ...userWithoutPassword } = newUser;
+  const { password: _, role: __, ...userWithoutPassword } = newUser;
 
   return { user: userWithoutPassword };
 };

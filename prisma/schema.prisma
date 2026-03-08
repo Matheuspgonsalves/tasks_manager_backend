@@ -30,7 +30,7 @@ model User {
   password  String
   createdAt DateTime @default(now())
   tasks     Tasks[]
-  permissao Role     @default(user)
+  role Role     @default(user)
 }
 
 model Tasks {
