@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { getAllUsersController } from "../controllers/users/getAllUsers.controller";
-import { getUserByIdController } from "../controllers/users/getUserById.controller";
-import { updateUserByIdController } from "../controllers/users/updateUserById.controller";
-import { deleteUserByIdController } from "../controllers/users/deleteUserById.controller";
-import { createUserController } from "../controllers/users/createUser.controller";
+import { getAllUsersController } from "../http/users/getAllUsers.http";
+import { getUserByIdController } from "../http/users/getUserById.http";
+import { updateUserByIdController } from "../http/users/updateUserById.http";
+import { deleteUserByIdController } from "../http/users/deleteUserById.http";
+import { createUserController } from "../http/users/createUser.http";
 
 const userRoutes = Router();
 
