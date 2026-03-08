@@ -1,9 +1,9 @@
 import { Router } from "express";
-import { createTaskController } from "../controllers/tasks/createTask.controller";
-import { getAllTasksByNameController } from "../controllers/tasks/getAllTasksByName.controller";
-import { getTaskByIdController } from "../controllers/tasks/getTaskById.controller";
-import { updateTaskByIdController } from "../controllers/tasks/updateTaskById.controller";
-import { deleteTaskByIdController } from "../controllers/tasks/deleteTaskById.controller";
+import { createTaskController } from "../http/tasks/createTask.http";
+import { getAllTasksByNameController } from "../http/tasks/getAllTasksByName.http";
+import { getTaskByIdController } from "../http/tasks/getTaskById.http";
+import { updateTaskByIdController } from "../http/tasks/updateTaskById.http";
+import { deleteTaskByIdController } from "../http/tasks/deleteTaskById.http";
 
 const tasksRoutes = Router();
 
