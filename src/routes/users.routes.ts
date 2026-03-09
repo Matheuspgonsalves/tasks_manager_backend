@@ -11,9 +11,9 @@ import { deleteTaskByIdController } from "../http/tasks/deleteTaskById.http";
 const userRoutes = Router();
 
 // User
-userRoutes.get("/:id", getUserByIdController);
-userRoutes.put("/:id", updateUserByIdController);
-userRoutes.delete("/:id", deleteUserByIdController);
+userRoutes.get("/user/:id", getUserByIdController);
+userRoutes.put("/user/:id", updateUserByIdController);
+userRoutes.delete("/user/:id", deleteUserByIdController);
 
 // Tasks
 userRoutes.post("/create/task", createTaskController);
