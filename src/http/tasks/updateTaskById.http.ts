@@ -3,6 +3,7 @@ import Joi from "joi";
 import { Tasks } from "../../interfaces/tasks.interface";
 import { TaskStatus } from "@prisma/client";
 import { updateTaskUseCase } from "./useCases/updateTask.useCase";
+import { TaskIdRequestParams } from "../../interfaces/requestParams.interface";
 
 const taskUpdateSchema: Joi.Schema<Tasks> = Joi.object({
   title: Joi.string().required(),
@@ -13,7 +14,10 @@ const taskUpdateSchema: Joi.Schema<Tasks> = Joi.object({
   userId: Joi.string().required(),
 });
 
-export const updateTaskByIdController = async (req: Request, res: Response) => {
+export const updateTaskByIdController = async (
+  req: Request<TaskIdRequestParams>,
+  res: Response
+) => {
   const body: Tasks = req.body;
   const taskId: string = req.params.taskId;
   const taskValidation: any = taskUpdateSchema.validate(body);

@@ -1,7 +1,11 @@
 import { Request, Response } from "express";
 import { findTasksById } from "./useCases/getTasksById.userCase";
+import { IdRequestParams } from "../../interfaces/requestParams.interface";
 
-export const getTaskByIdController = async (req: Request, res: Response) => {
+export const getTaskByIdController = async (
+  req: Request<IdRequestParams>,
+  res: Response
+) => {
   const taskId: string = req.params.id;
 
   const getTaskByIdResult = await findTasksById(taskId);

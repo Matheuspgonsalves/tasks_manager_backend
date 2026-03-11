@@ -1,7 +1,11 @@
 import { Request, Response } from "express";
 import { findUserById } from "./useCases/getUserById.useCase";
+import { IdRequestParams } from "../../interfaces/requestParams.interface";
 
-export const getUserByIdController = async (req: Request, res: Response) => {
+export const getUserByIdController = async (
+  req: Request<IdRequestParams>,
+  res: Response
+) => {
   const id: string = req.params.id;
 
   const getUserResult = await findUserById(id);
