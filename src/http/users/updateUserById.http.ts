@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Joi from "joi";
 import { Users } from "../../interfaces/users.interface";
 import { updateUserUseCase } from "./useCases/updateUser.useCase";
+import { IdRequestParams } from "../../interfaces/requestParams.interface";
 
 const registerSchema: Joi.Schema<Users> = Joi.object({
   name: Joi.string().required(),
@@ -9,7 +10,10 @@ const registerSchema: Joi.Schema<Users> = Joi.object({
   password: Joi.string().required(),
 });
 
-export const updateUserByIdController = async (req: Request, res: Response) => {
+export const updateUserByIdController = async (
+  req: Request<IdRequestParams>,
+  res: Response
+) => {
   const body: Users = req.body;
   const userId: string = req.params.id;
   const userValidation: any = registerSchema.validate(body);

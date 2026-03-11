@@ -1,7 +1,11 @@
 import { Request, Response } from "express";
 import { deleteUserById } from "./useCases/deleteUserById.useCase";
+import { IdRequestParams } from "../../interfaces/requestParams.interface";
 
-export const deleteUserByIdController = async (req: Request, res: Response) => {
+export const deleteUserByIdController = async (
+  req: Request<IdRequestParams>,
+  res: Response
+) => {
   const id: string = req.params.id;
 
   const deleteUserResult = await deleteUserById(id);
