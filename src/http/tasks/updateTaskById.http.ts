@@ -15,7 +15,7 @@ const taskUpdateSchema: Joi.Schema<Tasks> = Joi.object({
 
 export const updateTaskByIdController = async (req: Request, res: Response) => {
   const body: Tasks = req.body;
-  const taskId: string = req.params.id;
+  const taskId: string = req.params.taskId;
   const taskValidation: any = taskUpdateSchema.validate(body);
 
   if (taskValidation.error) {
