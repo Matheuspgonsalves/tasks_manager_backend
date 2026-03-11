@@ -9,23 +9,28 @@ const loginSchema: Joi.Schema<Login> = Joi.object({
 });
 
 export const loginController = async (req: Request, res: Response) => {
-  const body: Login = req.body;
-  const loginValidation = loginSchema.validate(body);
+  try {
+    const body: Login = req.body;
+    const loginValidation = loginSchema.validate(body);
 
-  if (loginValidation.error) {
-    return res
-      .status(400)
-      .send({ message: loginValidation.error.details[0].message });
+    if (loginValidation.error) {
+      return res
+        .status(400)
+        .send({ message: loginValidation.error.details[0].message });
+    }
+
+    const loginResult = await loginUseCase(body);
+
+    if (loginResult.error) {
+      return res.status(401).send({ message: `Error: ${loginResult.error}` });
+    }
+
+    return res.status(200).send({
+      message: "Login successfully completed",
+      ...loginResult,
+    });
+  } catch (error) {
+    console.error("Login route error:", error);
+    return res.status(500).send({ message: "Internal server error" });
   }
-
-  const loginResult = await loginUseCase(body);
-
-  if (loginResult.error) {
-    return res.status(401).send({ message: `Error: ${loginResult.error}` });
-  }
-
-  return res.status(200).send({
-    message: "Login successfully completed",
-    ...loginResult
-  });
 };
