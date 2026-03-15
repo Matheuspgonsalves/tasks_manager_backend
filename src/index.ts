@@ -1,5 +1,6 @@
 import cors from "cors";
 import express from "express";
+import cookieParser from "cookie-parser";
 import "dotenv/config";
 import routes from "./routes/index.routes";
 
@@ -11,10 +12,12 @@ const allowedOrigins = ["http://localhost:5173", process.env.FRONTEND_URL].filte
 app.use(
   cors({
     origin: allowedOrigins,
+    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "x-access-token"],
   })
 );
+app.use(cookieParser());
 app.use(express.json());
 app.use(routes);
 app.get("/", (req: any, res: any) => {

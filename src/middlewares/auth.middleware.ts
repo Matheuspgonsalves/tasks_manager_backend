@@ -2,15 +2,16 @@ import "dotenv/config"
 import jwt from "jsonwebtoken";
 import { AuthRequest, JwtPayload } from "../interfaces/AuthRequest.interface";
 import { Response, NextFunction } from "express";
+import { COOKIE_NAMES } from "../utils/cookies.util";
 
-const MySecretWord: string = process.env.JWT_SECRET || "";
+const MySecretWord: string | undefined = process.env.JWT_SECRET;
 
 export const checkToken = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
-        let token: string | undefined = req.headers["x-access-token"] as string || req.headers["authorization"] as string;
+        let token: string | null = null;
 
-        if (token && token.startsWith("Bearer ")) {
-            token = token.slice(7, token.length);
+        if (req.cookies && req.cookies[COOKIE_NAMES.ACCESS_TOKEN]) {
+            token = req.cookies[COOKIE_NAMES.ACCESS_TOKEN];
         }
 
         if (!token) {
@@ -43,8 +44,19 @@ export const checkToken = async (req: AuthRequest, res: Response, next: NextFunc
                 });
                 return
             }
+
+            res.status(401).json({
+                success: false,
+                message: "Invalid token. Please login again."
+            });
         }
     } catch (error) {
+        const isProduction = process.env.NODE_ENV === "production";
+        
+        if (!isProduction) {
+        console.error("Authentication error:", error);
+        }
+
         res.status(500).json({
             success: false,
             message: "An error ocurred. Please try again later."
@@ -54,6 +66,5 @@ export const checkToken = async (req: AuthRequest, res: Response, next: NextFunc
 };
 
 export default {
-    MySecretWord,
     checkToken,
 };

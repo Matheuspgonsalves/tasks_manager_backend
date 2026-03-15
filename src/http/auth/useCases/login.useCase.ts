@@ -29,8 +29,14 @@ export const loginUseCase = async (data: Login) => {
       role: user.role,
     };
 
-    const newAccesToken: string = jwt.sign(payload, authMiddleware.MySecretWord, {
-      expiresIn: "24h",
+    const jwtSecret = process.env.JWT_SECRET;
+
+    if (!jwtSecret) {
+      throw new Error("JWT_SECRET not configured");
+    }
+
+    const newAccesToken: string = jwt.sign(payload, jwtSecret, {
+      expiresIn: "7d",
     });
 
     return {

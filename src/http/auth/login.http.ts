@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Joi from "joi";
 import { Login } from "../../interfaces/login.interface";
 import { loginUseCase } from "./useCases/login.useCase";
+import { setAccessTokenCookie } from "../../utils/cookies.util";
 
 const loginSchema: Joi.Schema<Login> = Joi.object({
   email: Joi.string().email().required(),
@@ -25,9 +26,16 @@ export const loginController = async (req: Request, res: Response) => {
       return res.status(401).send({ message: `Error: ${loginResult.error}` });
     }
 
+    if (!loginResult.newAccesToken) {
+      return res.status(500).send({ message: "Token generation failed" });
+    }
+
+    setAccessTokenCookie(res, loginResult.newAccesToken);
+
     return res.status(200).send({
+      success: true,
       message: "Login successfully completed",
-      ...loginResult,
+      user: loginResult.user,
     });
   } catch (error) {
     console.error("Login route error:", error);
