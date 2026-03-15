@@ -3,11 +3,29 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import "dotenv/config";
 import routes from "./routes/index.routes";
+import { createTimer, logObservation } from "./utils/observability.util";
+
+const bootstrapTimer = createTimer();
+
+logObservation({ flow: "bootstrap" }, "process_started", {
+  pid: process.pid,
+  nodeVersion: process.version,
+});
 
 const app = express();
+
+logObservation({ flow: "bootstrap" }, "app_created", {
+  ...bootstrapTimer.checkpoint(),
+});
+
 const allowedOrigins = ["http://localhost:5173", process.env.FRONTEND_URL].filter(
   (origin): origin is string => Boolean(origin)
 );
+
+logObservation({ flow: "bootstrap" }, "allowed_origins_resolved", {
+  ...bootstrapTimer.checkpoint(),
+  allowedOrigins,
+});
 
 app.use(
   cors({
@@ -24,8 +42,21 @@ app.get("/", (req: any, res: any) => {
   res.send({ message: "You're not suposed to be here" });
 });
 
+logObservation({ flow: "bootstrap" }, "middlewares_and_routes_registered", {
+  ...bootstrapTimer.checkpoint(),
+});
+
 const port = process.env.PORT || 3000;
 
+logObservation({ flow: "bootstrap" }, "about_to_listen", {
+  ...bootstrapTimer.checkpoint(),
+  port,
+});
+
 app.listen(port, () => {
+  logObservation({ flow: "bootstrap" }, "server_listening", {
+    ...bootstrapTimer.checkpoint(),
+    port,
+  });
   console.log(`Servidor rodando em http://localhost:${port}`);
 });
