@@ -3,7 +3,6 @@ import prisma from "../../../configs/database";
 import { Login } from "../../../interfaces/login.interface";
 import jwt from "jsonwebtoken";
 import { JwtPayload } from "../../../interfaces/AuthRequest.interface";
-import authMiddleware from "../../../middlewares/auth.middleware";
 
 export const loginUseCase = async (data: Login) => {
   try {
