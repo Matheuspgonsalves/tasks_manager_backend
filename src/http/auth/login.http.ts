@@ -82,9 +82,18 @@ export const loginController = async (req: Request, res: Response) => {
 
     logObservation({ flow: "auth.login", requestId }, "setting_auth_cookie", {
       ...timer.checkpoint(),
+      origin: req.headers.origin,
+      referer: req.headers.referer,
+      userAgent: req.headers["user-agent"],
     });
 
     setAccessTokenCookie(res, loginResult.newAccesToken);
+
+    logObservation({ flow: "auth.login", requestId }, "auth_cookie_set", {
+      ...timer.checkpoint(),
+      hasSetCookieHeader: Boolean(res.getHeader("set-cookie")),
+      setCookieHeader: res.getHeader("set-cookie"),
+    });
 
     logObservation({ flow: "auth.login", requestId }, "about_to_respond", {
       ...timer.checkpoint(),
