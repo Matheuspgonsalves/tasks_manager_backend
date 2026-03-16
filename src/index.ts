@@ -18,7 +18,7 @@ logObservation({ flow: "bootstrap" }, "app_created", {
   ...bootstrapTimer.checkpoint(),
 });
 
-const allowedOrigins = ["http://localhost:5173", process.env.FRONTEND_URL].filter(
+const allowedOrigins = ["http://localhost:5173", "http://192.168.15.141:5173", process.env.FRONTEND_URL].filter(
   (origin): origin is string => Boolean(origin)
 );
 
