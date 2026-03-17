@@ -1,4 +1,10 @@
 import { Router } from "express";
+import authorizationMiddleware from "../middlewares/authorization.middleware";
+import {
+  IdRequestParams,
+  TaskIdRequestParams,
+  UserIdRequestParams,
+} from "../interfaces/requestParams.interface";
 // User
 import { getUserByIdController } from "../http/users/getUserById.http";
 import { updateUserByIdController } from "../http/users/updateUserById.http";
@@ -12,14 +18,27 @@ import { getAllTasksByUserIdController } from "../http/tasks/getAllTasksByUserId
 const userRoutes = Router();
 
 // User
-userRoutes.get("/:id", getUserByIdController);
-userRoutes.put("/:id", updateUserByIdController);
-userRoutes.delete("/:id", deleteUserByIdController);
+userRoutes.get<IdRequestParams>("/:id", authorizationMiddleware.authorizeUserByParam("id"), getUserByIdController);
+userRoutes.put<IdRequestParams>("/:id", authorizationMiddleware.authorizeUserByParam("id"), updateUserByIdController);
+userRoutes.delete<IdRequestParams>("/:id", authorizationMiddleware.authorizeUserByParam("id"), deleteUserByIdController);
 
 // Tasks
-userRoutes.post("/tasks", createTaskController);
-userRoutes.get("/:userId/tasks", getAllTasksByUserIdController);
-userRoutes.put("/tasks/:taskId", updateTaskByIdController);
-userRoutes.delete("/task/:id", deleteTaskByIdController);
+userRoutes.post("/tasks", authorizationMiddleware.authorizeTaskBodyUser, createTaskController);
+userRoutes.get<UserIdRequestParams>(
+  "/:userId/tasks",
+  authorizationMiddleware.authorizeUserByParam("userId"),
+  getAllTasksByUserIdController
+);
+userRoutes.put<TaskIdRequestParams>(
+  "/tasks/:taskId",
+  authorizationMiddleware.authorizeTaskByParam("taskId"),
+  authorizationMiddleware.authorizeTaskBodyUser,
+  updateTaskByIdController
+);
+userRoutes.delete<IdRequestParams>(
+  "/task/:id",
+  authorizationMiddleware.authorizeTaskByParam("id"),
+  deleteTaskByIdController
+);
 
 export default userRoutes;

@@ -1,6 +1,12 @@
-import { Request, Response, NextFunction } from "express";
+import { Request } from "express";
+import { ParamsDictionary, Query } from "express-serve-static-core";
 
-export interface AuthRequest extends Request {
+export interface AuthRequest<
+    P = ParamsDictionary,
+    ResBody = any,
+    ReqBody = any,
+    ReqQuery = Query
+> extends Request<P, ResBody, ReqBody, ReqQuery> {
     user?: {
         id: string;
         email: string;
