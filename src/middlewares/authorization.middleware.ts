@@ -2,10 +2,18 @@ import { Response, NextFunction } from "express";
 import prisma from "../configs/database";
 import { AuthRequest } from "../interfaces/AuthRequest.interface";
 
+const normalizeParamValue = (value: string | string[] | undefined): string | undefined => {
+    if (Array.isArray(value)) {
+        return value[0];
+    }
+
+    return value;
+};
+
 export const authorizeUserByParam = (paramName: "id" | "userId" = "id") => {
     return (req: AuthRequest, res: Response, next: NextFunction): void => {
         const authenticatedUserId = req.user?.id;
-        const requestedUserId = req.params[paramName];
+        const requestedUserId = normalizeParamValue(req.params[paramName]);
 
         if (!authenticatedUserId) {
             res.status(401).json({
@@ -69,7 +77,7 @@ export const authorizeTaskBodyUser = (req: AuthRequest, res: Response, next: Nex
 export const authorizeTaskByParam = (paramName: "id" | "taskId" = "taskId") => {
     return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
         const authenticatedUserId = req.user?.id;
-        const taskId = req.params[paramName];
+        const taskId = normalizeParamValue(req.params[paramName]);
 
         if (!authenticatedUserId) {
             res.status(401).json({
