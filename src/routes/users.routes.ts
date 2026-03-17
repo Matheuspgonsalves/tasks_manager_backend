@@ -15,6 +15,9 @@ import { createTaskController } from "../http/tasks/createTask.http";
 import { updateTaskByIdController } from "../http/tasks/updateTaskById.http";
 import { deleteTaskByIdController } from "../http/tasks/deleteTaskById.http";
 import { getAllTasksByUserIdController } from "../http/tasks/getAllTasksByUserId.http";
+import { getTasksByStatusController } from "../http/filters/getTasksByStatus.http";
+import { getTasksByCategoryController } from "../http/filters/getTasksByCategory.http";
+import { searchTasksController } from "../http/filters/searchTasks.http";
 // Category
 import { createCategoryController } from "../http/categories/createCategory.http";
 import { getAllCategoriesByUserIdController } from "../http/categories/getAllCategoriesByUserId.http";
@@ -31,6 +34,21 @@ userRoutes.delete<IdRequestParams>("/:id", authorizationMiddleware.authorizeUser
 
 // Tasks
 userRoutes.post("/tasks", authorizationMiddleware.authorizeTaskBodyUser, createTaskController);
+userRoutes.get<UserIdRequestParams>(
+  "/:userId/tasks/status",
+  authorizationMiddleware.authorizeUserByParam("userId"),
+  getTasksByStatusController
+);
+userRoutes.get<UserIdRequestParams>(
+  "/:userId/tasks/category",
+  authorizationMiddleware.authorizeUserByParam("userId"),
+  getTasksByCategoryController
+);
+userRoutes.get<UserIdRequestParams>(
+  "/:userId/tasks/search",
+  authorizationMiddleware.authorizeUserByParam("userId"),
+  searchTasksController
+);
 userRoutes.get<UserIdRequestParams>(
   "/:userId/tasks",
   authorizationMiddleware.authorizeUserByParam("userId"),
