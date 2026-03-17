@@ -6,4 +6,5 @@ export interface Tasks {
   description: string;
   status: TaskStatus;
   userId: string;
+  categoryId: string;
 }

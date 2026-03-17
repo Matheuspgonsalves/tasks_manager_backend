@@ -1,6 +1,7 @@
 import { Router } from "express";
 import authorizationMiddleware from "../middlewares/authorization.middleware";
 import {
+  CategoryIdRequestParams,
   IdRequestParams,
   TaskIdRequestParams,
   UserIdRequestParams,
@@ -14,6 +15,12 @@ import { createTaskController } from "../http/tasks/createTask.http";
 import { updateTaskByIdController } from "../http/tasks/updateTaskById.http";
 import { deleteTaskByIdController } from "../http/tasks/deleteTaskById.http";
 import { getAllTasksByUserIdController } from "../http/tasks/getAllTasksByUserId.http";
+// Category
+import { createCategoryController } from "../http/categories/createCategory.http";
+import { getAllCategoriesByUserIdController } from "../http/categories/getAllCategoriesByUserId.http";
+import { getCategoryByIdController } from "../http/categories/getCategoryById.http";
+import { updateCategoryByIdController } from "../http/categories/updateCategoryById.http";
+import { deleteCategoryByIdController } from "../http/categories/deleteCategoryById.http";
 
 const userRoutes = Router();
 
@@ -39,6 +46,34 @@ userRoutes.delete<IdRequestParams>(
   "/task/:id",
   authorizationMiddleware.authorizeTaskByParam("id"),
   deleteTaskByIdController
+);
+
+// Categories
+userRoutes.post(
+  "/categories",
+  authorizationMiddleware.authorizeCategoryBodyUser,
+  createCategoryController
+);
+userRoutes.get<UserIdRequestParams>(
+  "/:userId/categories",
+  authorizationMiddleware.authorizeUserByParam("userId"),
+  getAllCategoriesByUserIdController
+);
+userRoutes.get<CategoryIdRequestParams>(
+  "/categories/:categoryId",
+  authorizationMiddleware.authorizeCategoryByParam("categoryId"),
+  getCategoryByIdController
+);
+userRoutes.put<CategoryIdRequestParams>(
+  "/categories/:categoryId",
+  authorizationMiddleware.authorizeCategoryByParam("categoryId"),
+  authorizationMiddleware.authorizeCategoryBodyUser,
+  updateCategoryByIdController
+);
+userRoutes.delete<CategoryIdRequestParams>(
+  "/categories/:categoryId",
+  authorizationMiddleware.authorizeCategoryByParam("categoryId"),
+  deleteCategoryByIdController
 );
 
 export default userRoutes;

@@ -1,10 +1,10 @@
 import { TaskStatus } from "@prisma/client";
 import prisma from "../../../configs/database";
 import { Tasks } from "../../../interfaces/tasks.interface";
-import { error } from "console";
 
 export const createTaskUseCase = async (data: Tasks) => {
-  const { title, description, status, userId } = data;
+  const { title, description, status, userId, categoryId } = data;
+  const normalizedCategoryId = categoryId.trim();
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -22,12 +22,36 @@ export const createTaskUseCase = async (data: Tasks) => {
     return { error: "Task with same title already existis" };
   }
 
+  const category = await prisma.category.findUnique({
+    where: { id: normalizedCategoryId },
+    include: {
+      hiddenByUsers: {
+        where: {
+          userId,
+        },
+      },
+    },
+  });
+
+  const categoryIsAccessible =
+    category !== null &&
+    (
+      category.isDefault
+        ? category.hiddenByUsers.length === 0
+        : category.ownerUserId === userId
+    );
+
+  if (!categoryIsAccessible) {
+    return { error: "Category not found for this user" };
+  }
+
   const newTask = await prisma.tasks.create({
     data: {
       title,
       description,
       status: status as TaskStatus,
       userId,
+      categoryId: normalizedCategoryId,
     },
   });
 

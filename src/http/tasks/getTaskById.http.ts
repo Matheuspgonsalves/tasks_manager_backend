@@ -6,15 +6,32 @@ export const getTaskByIdController = async (
   req: Request<IdRequestParams>,
   res: Response
 ) => {
-  const taskId: string = req.params.id;
+  try {
+    const taskId: string = req.params.id;
 
-  const getTaskByIdResult = await findTasksById(taskId);
+    const getTaskByIdResult = await findTasksById(taskId);
 
-  if (getTaskByIdResult.error === "Task ID required")
-    return res.status(400).send({ message: getTaskByIdResult.error });
+    if (getTaskByIdResult.error === "Task ID required")
+      return res.status(400).send({
+        success: false,
+        message: getTaskByIdResult.error,
+      });
 
-  if (getTaskByIdResult.error === "Task not found")
-    return res.status(404).send({ message: getTaskByIdResult.error });
+    if (getTaskByIdResult.error === "Task not found")
+      return res.status(404).send({
+        success: false,
+        message: getTaskByIdResult.error,
+      });
 
-  return res.status(200).send({ message: "OK", tasks: getTaskByIdResult.task });
+    return res.status(200).send({
+      success: true,
+      message: "Task fetched successfully",
+      tasks: getTaskByIdResult.task,
+    });
+  } catch (error) {
+    return res.status(500).send({
+      success: false,
+      message: "Internal server error",
+    });
+  }
 };

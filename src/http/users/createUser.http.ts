@@ -10,23 +10,35 @@ const registerSchema: Joi.Schema<Users> = Joi.object({
 });
 
 export const createUserController = async (req: Request, res: Response) => {
-  const body: Users = req.body;
-  const userValidation: any = registerSchema.validate(body);
+  try {
+    const body: Users = req.body;
+    const userValidation: any = registerSchema.validate(body);
 
-  if (userValidation.error) {
-    return res
-      .status(400)
-      .send({ message: userValidation.error.details[0].message });
+    if (userValidation.error) {
+      return res.status(400).send({
+        success: false,
+        message: userValidation.error.details[0].message,
+      });
+    }
+
+    const createUserResult = await createUserUseCase(body);
+
+    if (createUserResult.error) {
+      return res.status(409).send({
+        success: false,
+        message: createUserResult.error,
+      });
+    }
+
+    return res.status(201).send({
+      success: true,
+      message: "User successfully created",
+      user: createUserResult.user,
+    });
+  } catch (error) {
+    return res.status(500).send({
+      success: false,
+      message: "Internal server error",
+    });
   }
-
-  const createUserResult = await createUserUseCase(body);
-
-  if (createUserResult.error) {
-    return res.status(409).send({ message: createUserResult.error });
-  }
-
-  return res.status(201).send({
-    message: "User successfully created",
-    user: createUserResult.user,
-  });
 };

@@ -7,6 +7,9 @@ export const findTasksById = async (id: string) => {
 
   const getTaskById = await prisma.tasks.findUnique({
     where: { id },
+    include: {
+      category: true,
+    },
   });
 
   if (!getTaskById) {
