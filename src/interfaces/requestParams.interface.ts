@@ -11,3 +11,7 @@ export interface UserIdRequestParams extends ParamsDictionary {
 export interface TaskIdRequestParams extends ParamsDictionary {
   taskId: string;
 }
+
+export interface CategoryIdRequestParams extends ParamsDictionary {
+  categoryId: string;
+}

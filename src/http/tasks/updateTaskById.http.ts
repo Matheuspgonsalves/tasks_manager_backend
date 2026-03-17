@@ -12,42 +12,71 @@ const taskUpdateSchema: Joi.Schema<Tasks> = Joi.object({
     .valid(...Object.values(TaskStatus))
     .required(),
   userId: Joi.string().required(),
+  categoryId: Joi.string().required(),
 });
 
 export const updateTaskByIdController = async (
   req: Request<TaskIdRequestParams>,
   res: Response
 ) => {
-  const body: Tasks = req.body;
-  const taskId: string = req.params.taskId;
-  const taskValidation: any = taskUpdateSchema.validate(body);
+  try {
+    const body: Tasks = req.body;
+    const taskId: string = req.params.taskId;
+    const taskValidation: any = taskUpdateSchema.validate(body);
 
-  if (taskValidation.error) {
-    return res
-      .status(400)
-      .send({ message: taskValidation.error.details[0].message });
+    if (taskValidation.error) {
+      return res.status(400).send({
+        success: false,
+        message: taskValidation.error.details[0].message,
+      });
+    }
+
+    const taskUpdate = await updateTaskUseCase(body, taskId);
+
+    if (taskUpdate.error === "Task ID required") {
+      return res.status(400).send({
+        success: false,
+        message: taskUpdate.error,
+      });
+    }
+
+    if (taskUpdate.error === "Task not found") {
+      return res.status(404).send({
+        success: false,
+        message: taskUpdate.error,
+      });
+    }
+
+    if (taskUpdate.error === "Associated user not found") {
+      return res.status(400).send({
+        success: false,
+        message: taskUpdate.error,
+      });
+    }
+
+    if (taskUpdate.error === "Category not found for this user") {
+      return res.status(404).send({
+        success: false,
+        message: taskUpdate.error,
+      });
+    }
+
+    if (taskUpdate.error) {
+      return res.status(400).send({
+        success: false,
+        message: taskUpdate.error,
+      });
+    }
+
+    return res.status(201).send({
+      success: true,
+      message: "Task successfully updated",
+      task: taskUpdate.updated_task,
+    });
+  } catch (error) {
+    return res.status(500).send({
+      success: false,
+      message: "Internal server error",
+    });
   }
-
-  const taskUpdate = await updateTaskUseCase(body, taskId);
-
-  if (taskUpdate.error === "Task ID required") {
-    return res.status(400).send({ message: taskUpdate.error });
-  }
-
-  if (taskUpdate.error === "Task not found") {
-    return res.status(404).send({ message: taskUpdate.error });
-  }
-
-  if (taskUpdate.error === "Associated user not found") {
-    return res.status(400).send({ message: taskUpdate.error });
-  }
-
-  if (taskUpdate.error) {
-    return res.status(400).send({ message: taskUpdate.error });
-  }
-
-  return res.status(201).send({
-    message: "User successfully updated",
-    task: taskUpdate.updated_task,
-  });
 };

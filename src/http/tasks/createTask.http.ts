@@ -11,37 +11,56 @@ const taskRegisterSchema: Joi.Schema<Tasks> = Joi.object({
     .valid(...Object.values(TaskStatus))
     .required(),
   userId: Joi.string().required(),
+  categoryId: Joi.string().required(),
 });
 
 export const createTaskController = async (req: Request, res: Response) => {
-  const body: Tasks = req.body;
-  const taskValidation: any = taskRegisterSchema.validate(body);
+  try {
+    const body: Tasks = req.body;
+    const taskValidation: any = taskRegisterSchema.validate(body);
 
-  if (taskValidation.error) {
-    return res
-      .status(400)
-      .send({ message: taskValidation.error.details[0].message });
+    if (taskValidation.error) {
+      return res.status(400).send({
+        success: false,
+        message: taskValidation.error.details[0].message,
+      });
+    }
+
+    const createTaskResult = await createTaskUseCase(body);
+
+    if (createTaskResult.error === "User not found")
+      return res.status(404).send({
+        success: false,
+        message: createTaskResult.error,
+      });
+
+    if (createTaskResult.error === "Task with same title already existis")
+      return res.status(409).send({
+        success: false,
+        message: createTaskResult.error,
+      });
+
+    if (createTaskResult.error === "Category not found for this user")
+      return res.status(404).send({
+        success: false,
+        message: createTaskResult.error,
+      });
+
+    if (createTaskResult.error)
+      return res.status(400).send({
+        success: false,
+        message: createTaskResult.error,
+      });
+
+    return res.status(201).send({
+      success: true,
+      message: "Task successfully created",
+      task: createTaskResult.task,
+    });
+  } catch (error) {
+    return res.status(500).send({
+      success: false,
+      message: "Internal server error",
+    });
   }
-
-  const createTaskResult = await createTaskUseCase(body);
-
-  if (createTaskResult.error === "User not found")
-    return res
-      .status(404)
-      .send({ message: `Error: ${createTaskResult.error}` });
-
-  if (createTaskResult.error === "Task with same title already existis")
-    return res
-      .status(409)
-      .send({ message: `Error: ${createTaskResult.error}` });
-
-  if (createTaskResult.error)
-    return res
-      .status(400)
-      .send({ message: `Error: ${createTaskResult.error}` });
-
-  return res.status(201).send({
-    message: "Task successfully created",
-    task: createTaskResult.task,
-  });
 };

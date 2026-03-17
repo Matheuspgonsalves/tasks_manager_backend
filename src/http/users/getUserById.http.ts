@@ -6,15 +6,32 @@ export const getUserByIdController = async (
   req: Request<IdRequestParams>,
   res: Response
 ) => {
-  const id: string = req.params.id;
+  try {
+    const id: string = req.params.id;
 
-  const getUserResult = await findUserById(id);
+    const getUserResult = await findUserById(id);
 
-  if (getUserResult.error === "User ID is required")
-    return res.status(400).send({ message: getUserResult.error });
+    if (getUserResult.error === "User ID is required")
+      return res.status(400).send({
+        success: false,
+        message: getUserResult.error,
+      });
 
-  if (getUserResult.error === "User not found")
-    return res.status(404).send({ message: getUserResult.error });
+    if (getUserResult.error === "User not found")
+      return res.status(404).send({
+        success: false,
+        message: getUserResult.error,
+      });
 
-  return res.status(200).send({ message: "OK", user: getUserResult.user });
+    return res.status(200).send({
+      success: true,
+      message: "User fetched successfully",
+      user: getUserResult.user,
+    });
+  } catch (error) {
+    return res.status(500).send({
+      success: false,
+      message: "Internal server error",
+    });
+  }
 };

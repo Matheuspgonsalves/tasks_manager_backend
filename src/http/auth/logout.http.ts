@@ -13,7 +13,7 @@ export const logoutController = async (req: AuthRequest, res: Response) => {
   } catch (error: any) {
     return res.status(500).send({
       success: false,
-      message: "Logout failed",
+      message: "Internal server error",
     });
   }
 }

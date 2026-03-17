@@ -7,6 +7,9 @@ export const findAllTasksByUserId = async (id: string) => {
 
 	const getTaskByUserId = await prisma.tasks.findMany({
 		where: { userId: id},
+		include: {
+			category: true,
+		},
 	});
 
 	return { tasks: getTaskByUserId };

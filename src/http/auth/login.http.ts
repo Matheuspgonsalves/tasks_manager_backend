@@ -47,7 +47,10 @@ export const loginController = async (req: Request, res: Response) => {
 
       return res
         .status(400)
-        .send({ message: loginValidation.error.details[0].message });
+        .send({
+          success: false,
+          message: loginValidation.error.details[0].message,
+        });
     }
 
     logObservation({ flow: "auth.login", requestId }, "use_case_started", {
@@ -68,7 +71,10 @@ export const loginController = async (req: Request, res: Response) => {
         error: loginResult.error,
       });
 
-      return res.status(401).send({ message: `Error: ${loginResult.error}` });
+      return res.status(401).send({
+        success: false,
+        message: loginResult.error,
+      });
     }
 
     if (!loginResult.newAccesToken) {
@@ -77,7 +83,10 @@ export const loginController = async (req: Request, res: Response) => {
         statusCode: 500,
       });
 
-      return res.status(500).send({ message: "Token generation failed" });
+      return res.status(500).send({
+        success: false,
+        message: "Token generation failed",
+      });
     }
 
     logObservation({ flow: "auth.login", requestId }, "setting_auth_cookie", {
@@ -113,6 +122,9 @@ export const loginController = async (req: Request, res: Response) => {
       statusCode: 500,
       error: error instanceof Error ? error.message : "Unknown error",
     });
-    return res.status(500).send({ message: "Internal server error" });
+    return res.status(500).send({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };

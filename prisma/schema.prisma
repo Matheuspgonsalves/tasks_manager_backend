@@ -24,13 +24,15 @@ enum Role {
 }
 
 model User {
-  id        String @id @default(uuid())
-  name      String
-  email     String @unique
-  password  String
-  createdAt DateTime @default(now())
-  tasks     Tasks[]
-  role Role     @default(user)
+  id                 String @id @default(uuid())
+  name               String
+  email              String @unique
+  password           String
+  createdAt          DateTime @default(now())
+  tasks              Tasks[]
+  ownedCategories    Category[]
+  hiddenCategories   HiddenCategory[]
+  role               Role @default(user)
 }
 
 model Tasks {
@@ -39,6 +41,32 @@ model Tasks {
   description String
   status      TaskStatus @default(pending)
   userId      String
+  categoryId  String
   createdAt   DateTime @default(now())
   user        User @relation(fields: [userId], references: [id])
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+}
+
+model Category {
+  id            String @id @default(uuid())
+  name          String
+  isDefault     Boolean @default(false)
+  ownerUserId   String?
+  createdAt     DateTime @default(now())
+  ownerUser     User? @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  tasks         Tasks[]
+  hiddenByUsers HiddenCategory[]
+
+  @@unique([ownerUserId, name])
+}
+
+model HiddenCategory {
+  id         String @id @default(uuid())
+  userId     String
+  categoryId String
+  createdAt  DateTime @default(now())
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categoryId])
 }
