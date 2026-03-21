@@ -9,13 +9,13 @@ export interface AuthRequest<
 > extends Request<P, ResBody, ReqBody, ReqQuery> {
     user?: {
         id: string;
-        email: string;
+        email?: string;
         role: "user" | "admin";
     }
 }
 
 export interface JwtPayload {
     id: string;
-    email: string;
+    email?: string;
     role: "user" | "admin";
 }

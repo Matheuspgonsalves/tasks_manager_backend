@@ -4,7 +4,7 @@ import { Categories } from "../../../interfaces/categories.interface";
 export const createCategoryUseCase = async (data: Categories) => {
   const { name, userId } = data;
 
-  const user = await prisma.user.findUnique({
+  const user = await prisma.profile.findUnique({
     where: { id: userId },
   });
 

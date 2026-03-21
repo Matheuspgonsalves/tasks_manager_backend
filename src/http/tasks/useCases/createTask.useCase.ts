@@ -6,7 +6,7 @@ export const createTaskUseCase = async (data: Tasks) => {
   const { title, description, status, userId, categoryId } = data;
   const normalizedCategoryId = categoryId.trim();
 
-  const user = await prisma.user.findUnique({
+  const user = await prisma.profile.findUnique({
     where: { id: userId },
   });
 

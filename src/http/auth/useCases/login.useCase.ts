@@ -1,9 +1,8 @@
-import bcrypt from "bcrypt";
-import prisma from "../../../configs/database";
 import { Login } from "../../../interfaces/login.interface";
-import jwt from "jsonwebtoken";
-import { JwtPayload } from "../../../interfaces/AuthRequest.interface";
 import { createTimer, logObservation } from "../../../utils/observability.util";
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 
 export const loginUseCase = async (data: Login, requestId?: string) => {
   const timer = createTimer();
@@ -16,66 +15,66 @@ export const loginUseCase = async (data: Login, requestId?: string) => {
       email,
     });
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    logObservation({ flow: "auth.login.usecase", requestId }, "user_lookup_finished", {
-      ...timer.checkpoint(),
-      userFound: Boolean(user),
-    });
-
-    if (!user) {
-      logObservation({ flow: "auth.login.usecase", requestId }, "user_not_found", {
-        ...timer.checkpoint(),
-      });
-
-      return { error: "Invalid email or password" };
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return {
+        error: "Supabase authentication environment variables are not configured",
+        statusCode: 500,
+      };
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    logObservation({ flow: "auth.login.usecase", requestId }, "password_check_finished", {
-      ...timer.checkpoint(),
-      isPasswordValid,
+    const response = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: supabaseAnonKey,
+      },
+      body: JSON.stringify({
+        email,
+        password,
+      }),
     });
 
-    if (!isPasswordValid) {
-      logObservation({ flow: "auth.login.usecase", requestId }, "invalid_password", {
+    const responseBody = (await response.json().catch(() => null)) as
+      | {
+          access_token?: string;
+          refresh_token?: string;
+          expires_in?: number;
+          token_type?: string;
+          user?: {
+            id: string;
+            email?: string;
+            role?: string;
+          };
+          msg?: string;
+          error_description?: string;
+          message?: string;
+        }
+      | null;
+
+    if (!response.ok) {
+      logObservation({ flow: "auth.login.usecase", requestId }, "supabase_login_failed", {
         ...timer.checkpoint(),
+        statusCode: response.status,
       });
 
-      return { error: "Invalid email or password" };
+      return {
+        error:
+          responseBody?.msg ||
+          responseBody?.error_description ||
+          responseBody?.message ||
+          "Invalid email or password",
+        statusCode: response.status,
+      };
     }
-
-    const payload: JwtPayload = {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-    };
-
-    const jwtSecret = process.env.JWT_SECRET;
-
-    if (!jwtSecret) {
-      logObservation({ flow: "auth.login.usecase", requestId }, "jwt_secret_missing", {
-        ...timer.checkpoint(),
-      });
-
-      throw new Error("JWT_SECRET not configured");
-    }
-
-    const newAccesToken: string = jwt.sign(payload, jwtSecret, {
-      expiresIn: "7d",
-    });
-
-    logObservation({ flow: "auth.login.usecase", requestId }, "jwt_signed", {
-      ...timer.checkpoint(),
-      userId: user.id,
-    });
 
     return {
-      user: payload,
-      newAccesToken,
+      user: responseBody?.user,
+      session: {
+        access_token: responseBody?.access_token,
+        refresh_token: responseBody?.refresh_token,
+        expires_in: responseBody?.expires_in,
+        token_type: responseBody?.token_type,
+      },
     };
   } catch (error) {
     console.error("Login use case error:", error);

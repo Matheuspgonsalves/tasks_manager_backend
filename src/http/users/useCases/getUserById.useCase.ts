@@ -5,12 +5,14 @@ export const findUserById = async (id: string) => {
     return { error: "User ID is required" };
   }
 
-  const findUser = await prisma.user.findUnique({
+  const findUser = await prisma.profile.findUnique({
     where: { id },
     select: {
       id: true,
       email: true,
       name: true,
+      role: true,
+      createdAt: true,
     },
   });
 
