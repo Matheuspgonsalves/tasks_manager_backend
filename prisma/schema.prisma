@@ -23,16 +23,17 @@ enum Role {
   admin
 }
 
-model User {
-  id                 String @id @default(uuid())
+model Profile {
+  id                 String @id @db.Uuid
   name               String
   email              String @unique
-  password           String
   createdAt          DateTime @default(now())
   tasks              Tasks[]
   ownedCategories    Category[]
   hiddenCategories   HiddenCategory[]
   role               Role @default(user)
+
+  @@map("profiles")
 }
 
 model Tasks {
@@ -40,10 +41,10 @@ model Tasks {
   title       String
   description String
   status      TaskStatus @default(pending)
-  userId      String
+  userId      String @db.Uuid
   categoryId  String
   createdAt   DateTime @default(now())
-  user        User @relation(fields: [userId], references: [id])
+  user        Profile @relation(fields: [userId], references: [id])
   category    Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 }
 
@@ -51,9 +52,9 @@ model Category {
   id            String @id @default(uuid())
   name          String
   isDefault     Boolean @default(false)
-  ownerUserId   String?
+  ownerUserId   String? @db.Uuid
   createdAt     DateTime @default(now())
-  ownerUser     User? @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  ownerUser     Profile? @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
   tasks         Tasks[]
   hiddenByUsers HiddenCategory[]
 
@@ -62,10 +63,10 @@ model Category {
 
 model HiddenCategory {
   id         String @id @default(uuid())
-  userId     String
+  userId     String @db.Uuid
   categoryId String
   createdAt  DateTime @default(now())
-  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
   category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@unique([userId, categoryId])

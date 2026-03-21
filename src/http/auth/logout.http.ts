@@ -1,14 +1,11 @@
-import { Response } from "express"
-import { clearAccessTokenCookie } from "../../utils/cookies.util";
+import { Response } from "express";
 import { AuthRequest } from "../../interfaces/AuthRequest.interface";
 
 export const logoutController = async (req: AuthRequest, res: Response) => {
   try {
-    clearAccessTokenCookie(res);
-
     return res.status(200).send({
         success: true,
-        message: "Logged out successfully",
+        message: "Local logout is unnecessary. Sign out through Supabase Auth on the frontend.",
     });
   } catch (error: any) {
     return res.status(500).send({
@@ -16,4 +13,4 @@ export const logoutController = async (req: AuthRequest, res: Response) => {
       message: "Internal server error",
     });
   }
-}
+};

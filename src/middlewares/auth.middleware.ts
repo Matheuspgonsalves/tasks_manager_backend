@@ -1,15 +1,51 @@
 import "dotenv/config"
-import jwt from "jsonwebtoken";
-import { AuthRequest, JwtPayload } from "../interfaces/AuthRequest.interface";
+import { AuthRequest } from "../interfaces/AuthRequest.interface";
 import { Response, NextFunction } from "express";
-import { COOKIE_NAMES } from "../utils/cookies.util";
 import {
     createRequestId,
     createTimer,
     logObservation,
 } from "../utils/observability.util";
 
-const MySecretWord: string | undefined = process.env.JWT_SECRET;
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+
+interface SupabaseUser {
+    id: string;
+    email?: string;
+    app_metadata?: {
+        role?: string;
+    };
+}
+
+const getBearerToken = (authorizationHeader?: string): string | null => {
+    if (!authorizationHeader?.startsWith("Bearer ")) {
+        return null;
+    }
+
+    const token = authorizationHeader.slice("Bearer ".length).trim();
+    return token || null;
+};
+
+const getSupabaseUser = async (token: string): Promise<SupabaseUser | null> => {
+    if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error("Supabase authentication environment variables are not configured");
+    }
+
+    const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
+        method: "GET",
+        headers: {
+            apikey: supabaseAnonKey,
+            Authorization: `Bearer ${token}`,
+        },
+    });
+
+    if (!response.ok) {
+        return null;
+    }
+
+    return response.json() as Promise<SupabaseUser>;
+};
 
 export const checkToken = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     const requestId = createRequestId();
@@ -26,33 +62,28 @@ export const checkToken = async (req: AuthRequest, res: Response, next: NextFunc
             userAgent: req.headers["user-agent"],
             hasCookiesObject: Boolean(req.cookies),
             cookieKeys,
-            hasAccessTokenCookie: Boolean(req.cookies?.[COOKIE_NAMES.ACCESS_TOKEN]),
+            hasAuthorizationHeader: Boolean(req.headers.authorization),
             ...timer.checkpoint(),
         });
 
-        let token: string | null = null;
-
-        if (req.cookies && req.cookies[COOKIE_NAMES.ACCESS_TOKEN]) {
-            token = req.cookies[COOKIE_NAMES.ACCESS_TOKEN];
-        }
+        const token = getBearerToken(req.headers.authorization);
 
         if (!token) {
             logObservation({ flow: "auth.middleware", requestId }, "request_rejected", {
-                reason: "cookie_absent",
+                reason: "authorization_header_absent",
                 statusCode: 401,
                 ...timer.checkpoint(),
             });
             res.status(401).json({
                 success: false,
-                message: "Authentication required. Please provide a valid token."
+                message: "Authentication required. Please provide a valid Supabase bearer token."
             });
             return;
         }
 
-        if (!MySecretWord) {
-            console.error("JWT_SECRET not configured");
+        if (!supabaseUrl || !supabaseAnonKey) {
             logObservation({ flow: "auth.middleware", requestId }, "request_failed", {
-                reason: "jwt_secret_missing",
+                reason: "supabase_env_missing",
                 statusCode: 500,
                 ...timer.checkpoint(),
             });
@@ -64,37 +95,42 @@ export const checkToken = async (req: AuthRequest, res: Response, next: NextFunc
         }
 
         try {
-            const decoded = jwt.verify(token, MySecretWord) as JwtPayload;
+            const supabaseUser = await getSupabaseUser(token);
 
-            req.user = decoded;
-            logObservation({ flow: "auth.middleware", requestId }, "token_accepted", {
-                userId: decoded.id,
-                email: decoded.email,
-                role: decoded.role,
-                ...timer.checkpoint(),
-            });
-            next();
-        } catch (error: any) {
-            if (error.name === "TokenExpiredError") {
+            if (!supabaseUser?.id) {
                 logObservation({ flow: "auth.middleware", requestId }, "request_rejected", {
-                    reason: "token_expired",
+                    reason: "token_invalid",
                     statusCode: 401,
-                    error: error.message,
-                    expiredAt: error.expiredAt,
                     ...timer.checkpoint(),
                 });
                 res.status(401).json({
                     success: false,
                     message: "Invalid token. Please login again."
                 });
-                return
+                return;
             }
 
+            const role = supabaseUser.app_metadata?.role === "admin"
+                    ? "admin"
+                    : "user";
+
+            req.user = {
+                id: supabaseUser.id,
+                email: supabaseUser.email,
+                role,
+            };
+            logObservation({ flow: "auth.middleware", requestId }, "token_accepted", {
+                userId: req.user.id,
+                email: req.user.email,
+                role: req.user.role,
+                ...timer.checkpoint(),
+            });
+            next();
+        } catch (error: any) {
             logObservation({ flow: "auth.middleware", requestId }, "request_rejected", {
                 reason: "token_invalid",
                 statusCode: 401,
                 error: error?.message,
-                errorName: error?.name,
                 ...timer.checkpoint(),
             });
             res.status(401).json({

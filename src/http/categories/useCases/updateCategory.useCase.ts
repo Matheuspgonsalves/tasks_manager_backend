@@ -24,7 +24,7 @@ export const updateCategoryUseCase = async (data: Categories, id: string) => {
     return { error: "Category not found" };
   }
 
-  const user = await prisma.user.findUnique({
+  const user = await prisma.profile.findUnique({
     where: { id: userId },
   });
 

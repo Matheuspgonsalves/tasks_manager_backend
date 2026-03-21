@@ -1,29 +1,32 @@
 import prisma from "../../../configs/database";
 import { Users } from "../../../interfaces/users.interface";
-import bcrypt from "bcrypt";
 
 export const createUserUseCase = async (data: Users) => {
-  const { name, email, password } = data;
+  const { id, name, email } = data;
 
-  const existingUser = await prisma.user.findUnique({
-    where: { email: email },
-  });
+  if (!id) {
+    return { error: "User ID is required" };
+  }
 
-  if (existingUser) {
+  const existingUser = await prisma.profile.findFirst({ where: { email } });
+
+  if (existingUser && existingUser.id !== id) {
     return { error: "Error: Email already exists" };
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  const newUser = await prisma.user.create({
-    data: {
+  const newUser = await prisma.profile.upsert({
+    where: { id },
+    create: {
+      id,
       name,
       email,
-      password: hashedPassword,
+      role: data.role ?? "user",
+    },
+    update: {
+      name,
+      email,
     },
   });
 
-  const { password: _, role: __, ...userWithoutPassword } = newUser;
-
-  return { user: userWithoutPassword };
+  return { user: newUser };
 };

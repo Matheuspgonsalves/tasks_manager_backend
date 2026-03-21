@@ -14,7 +14,7 @@ export const updateTaskUseCase = async (data: Tasks, id: string) => {
     return { error: "Task not found" };
   }
 
-  const userExists = await prisma.user.findUnique({ where: { id: userId } });
+  const userExists = await prisma.profile.findUnique({ where: { id: userId } });
   if (!userExists) {
     return { error: "Associated user not found" };
   }

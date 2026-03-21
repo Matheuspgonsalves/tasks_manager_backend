@@ -7,7 +7,6 @@ import { IdRequestParams } from "../../interfaces/requestParams.interface";
 const registerSchema: Joi.Schema<Users> = Joi.object({
   name: Joi.string().required(),
   email: Joi.string().email().required(),
-  password: Joi.string().required(),
 });
 
 export const updateUserByIdController = async (

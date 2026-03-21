@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import Joi from "joi";
 import { Login } from "../../interfaces/login.interface";
 import { loginUseCase } from "./useCases/login.useCase";
-import { setAccessTokenCookie } from "../../utils/cookies.util";
 import {
   createRequestId,
   createTimer,
@@ -34,23 +33,11 @@ export const loginController = async (req: Request, res: Response) => {
 
     const loginValidation = loginSchema.validate(body);
 
-    logObservation({ flow: "auth.login", requestId }, "payload_validated", {
-      ...timer.checkpoint(),
-      isValid: !loginValidation.error,
-    });
-
     if (loginValidation.error) {
-      logObservation({ flow: "auth.login", requestId }, "validation_failed", {
-        ...timer.checkpoint(),
-        error: loginValidation.error.details[0].message,
+      return res.status(400).send({
+        success: false,
+        message: loginValidation.error.details[0].message,
       });
-
-      return res
-        .status(400)
-        .send({
-          success: false,
-          message: loginValidation.error.details[0].message,
-        });
     }
 
     logObservation({ flow: "auth.login", requestId }, "use_case_started", {
@@ -67,53 +54,21 @@ export const loginController = async (req: Request, res: Response) => {
     if (loginResult.error) {
       logObservation({ flow: "auth.login", requestId }, "request_failed", {
         ...timer.checkpoint(),
-        statusCode: 401,
+        statusCode: loginResult.statusCode ?? 401,
         error: loginResult.error,
       });
 
-      return res.status(401).send({
+      return res.status(loginResult.statusCode ?? 401).send({
         success: false,
         message: loginResult.error,
       });
     }
 
-    if (!loginResult.newAccesToken) {
-      logObservation({ flow: "auth.login", requestId }, "token_missing", {
-        ...timer.checkpoint(),
-        statusCode: 500,
-      });
-
-      return res.status(500).send({
-        success: false,
-        message: "Token generation failed",
-      });
-    }
-
-    logObservation({ flow: "auth.login", requestId }, "setting_auth_cookie", {
-      ...timer.checkpoint(),
-      origin: req.headers.origin,
-      referer: req.headers.referer,
-      userAgent: req.headers["user-agent"],
-    });
-
-    setAccessTokenCookie(res, loginResult.newAccesToken);
-
-    logObservation({ flow: "auth.login", requestId }, "auth_cookie_set", {
-      ...timer.checkpoint(),
-      hasSetCookieHeader: Boolean(res.getHeader("set-cookie")),
-      setCookieHeader: res.getHeader("set-cookie"),
-    });
-
-    logObservation({ flow: "auth.login", requestId }, "about_to_respond", {
-      ...timer.checkpoint(),
-      statusCode: 200,
-      userId: loginResult.user?.id,
-    });
-
     return res.status(200).send({
       success: true,
       message: "Login successfully completed",
       user: loginResult.user,
+      session: loginResult.session,
     });
   } catch (error) {
     console.error("Login route error:", error);
